@@ -94,8 +94,23 @@ if question:
     st.write(result["result"])
 
     st.subheader("Sources")
+
+    # Track which (file, page) combos we've already shown, to avoid duplicates
+    seen_sources = set()
+
     for doc in result["source_documents"]:
-        source_file = doc.metadata.get("source", "unknown file")
-        page_number = doc.metadata.get("page", "unknown page")
-        with st.expander(f"{os.path.basename(source_file)} — page {page_number}"):
+        raw_source = doc.metadata.get("source", "unknown file")
+        # Normalize path separators (Windows uses \, Linux uses /) before extracting filename
+        clean_filename = os.path.basename(raw_source.replace("\\", "/"))
+
+        # Page numbers from PyPDFLoader are 0-indexed, so add 1 for the number a human expects
+        raw_page = doc.metadata.get("page", None)
+        page_number = raw_page + 1 if isinstance(raw_page, int) else "unknown"
+
+        source_key = (clean_filename, page_number)
+        if source_key in seen_sources:
+            continue  # skip duplicate chunk from the same file/page
+        seen_sources.add(source_key)
+
+        with st.expander(f"{clean_filename} — page {page_number}"):
             st.write(doc.page_content)
