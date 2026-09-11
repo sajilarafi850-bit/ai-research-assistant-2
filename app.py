@@ -55,8 +55,9 @@ def load_database():
 # A custom prompt template — this is the instruction we give the LLM
 # so it answers ONLY from the retrieved chunks, not from its own memory.
 PROMPT_TEMPLATE = """
-Use ONLY the following excerpts from research papers to answer the question.
-If the answer is not contained in the excerpts, say "I couldn't find this in the loaded papers" — do not make up an answer.
+Use the following excerpts from research papers to answer the question.
+The excerpts may describe the answer using different wording than the question — read carefully and connect related terms before concluding the answer isn't present.
+Only say "I couldn't find this in the loaded papers" if none of the excerpts are relevant at all. If the excerpts partially address the question, answer with what they say and note what's missing.
 
 Excerpts:
 {context}
@@ -78,7 +79,7 @@ llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
 # "search the database" + "send results to the LLM" in one step.
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
-    retriever=vector_db.as_retriever(search_kwargs={"k": 4}),  # retrieve top 4 chunks
+    retriever=vector_db.as_retriever(search_kwargs={"k": 6}),  # retrieve top 6 chunks
     chain_type_kwargs={"prompt": prompt},
     return_source_documents=True,  # this is what lets us show citations
 )
